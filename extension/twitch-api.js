@@ -36,15 +36,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateChannelInfo = exports.verifyTwitchDir = exports.refreshToken = void 0;
-const express_1 = __importDefault(require("express")); // eslint-disable-line import/no-extraneous-dependencies
 const needle_1 = __importDefault(require("needle"));
 const events = __importStar(require("./util/events"));
 const helpers_1 = require("./util/helpers");
 const nodecg_1 = require("./util/nodecg");
 const replicants_1 = require("./util/replicants");
 const nodecg = (0, nodecg_1.get)();
-const config = (0, helpers_1.bundleConfig)();
-const app = (0, express_1.default)();
+const config = nodecg.bundleConfig;
+const router = nodecg.Router();
 let channelInfoTO;
 replicants_1.twitchAPIData.value.state = 'off'; // Set this to "off" on every start.
 if (!config.twitch.ffzUseRepeater) {
@@ -231,7 +230,7 @@ function updateChannelInfo(title, game) {
             if (!dir && game) {
                 // If no category found, find entry for default category.
                 noTwitchGame = true;
-                [, dir] = yield (0, helpers_1.to)(verifyTwitchDir((0, helpers_1.bundleConfig)().twitch.streamDefaultGame));
+                [, dir] = yield (0, helpers_1.to)(verifyTwitchDir(nodecg.bundleConfig.twitch.streamDefaultGame));
             }
             if (!config.twitch.metadataUseExternal) {
                 const resp = yield request('patch', `/channels?broadcaster_id=${replicants_1.twitchAPIData.value.channelID}`, {
@@ -243,11 +242,11 @@ function updateChannelInfo(title, game) {
                 }
             }
             else { // Send out message for external code to listen to.
-                /* to(events.sendMessage('twitchExternalMetadata', {
-                  channelID: twitchAPIData.value.channelID,
-                  title: title?.slice(0, 140),
-                  gameID: dir?.id || '',
-                })); */
+                (0, helpers_1.to)(events.sendMessage('twitchExternalMetadata', {
+                    channelID: replicants_1.twitchAPIData.value.channelID,
+                    title: title === null || title === void 0 ? void 0 : title.slice(0, 140),
+                    gameID: (dir === null || dir === void 0 ? void 0 : dir.id) || '',
+                }));
                 nodecg.sendMessage('twitchExternalMetadata', {
                     channelID: replicants_1.twitchAPIData.value.channelID,
                     title: title === null || title === void 0 ? void 0 : title.slice(0, 140),
@@ -257,7 +256,8 @@ function updateChannelInfo(title, game) {
                 // Currently we assume it worked and don't get a confirmation.
                 // Checking *our* event system (server-to-server) isn't too hard, but checking
                 // NodeCG's server-to-server can never work, so for now not implementing it.
-                // For future-proofing, the message's types are set to allow an acknowledgement.
+                // For future-proofing, the message's types are set to allow an acknowledgement,
+                // although the return data type is set to `void`.
             }
             nodecg.log.info('[Twitch] Successfully updated channel information');
             // "New" API doesn't return anything so update the data with what we've got.
@@ -402,7 +402,7 @@ if (config.twitch.enabled) {
         });
     }
     // Route that receives Twitch's auth code when the user does the flow from the dashboard.
-    app.get('/nodecg-speedcontrol/twitchauth', (req, res) => {
+    router.get('/twitchauth', (req, res) => {
         replicants_1.twitchAPIData.value.state = 'authenticating';
         (0, needle_1.default)('post', 'https://id.twitch.tv/oauth2/token', {
             client_id: config.twitch.clientID,
@@ -426,7 +426,7 @@ if (config.twitch.enabled) {
             res.send('<b>Error while processing the Twitch authentication, please try again.</b>');
         });
     });
-    nodecg.mount(app);
+    nodecg.mount('/nodecg-speedcontrol', router);
 }
 // NodeCG messaging system.
 nodecg.listenFor('twitchUpdateChannelInfo', (data, ack) => {

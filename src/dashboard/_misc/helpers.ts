@@ -1,4 +1,4 @@
-import type { Dialog } from '@nodecg-speedcontrol/types';
+import { Alert } from "@nodecg-speedcontrol/types";
 
 /**
  * Checks if number needs a 0 adding to the start and does so if needed.
@@ -22,13 +22,40 @@ export function msToTimeStr(ms: number): string {
 }
 
 /**
+ * Check if a dialog is "loaded" or not (due to NodeCG v2.2.2 changes with lazy iframes).
+ * If it's not, will quickly open and close it to load it.
+ * @param name Name of dialog.
+ */
+export function checkDialog(name: string): Promise<void> {
+  return new Promise<void>((res) => {
+    const dialog = nodecg.getDialog(name);
+    const iframe = dialog?.querySelector('iframe');
+    if (iframe && dialog) {
+      // We check if it's loaded or not if our custom "openDialog" function exists.
+      const openDialog = (iframe.contentWindow as Alert.Dialog | null)?.openDialog;
+      if (openDialog) {
+        res();
+      } else {
+        iframe.addEventListener('load', () => {
+          dialog.close();
+          res();
+        }, { once: true });
+        dialog.open();
+      }
+    } else {
+      res();
+    }
+  });
+}
+
+/**
  * Gets dialog's contentWindow based on name, if possible.
  * @param name Name of dialog.
  */
 export function getDialog(name: string): Window | null {
   try {
-    const dialog = nodecg.getDialog(name) as Dialog;
-    const iframe = dialog.querySelector('iframe')?.contentWindow || null;
+    const dialog = nodecg.getDialog(name);
+    const iframe = dialog?.querySelector('iframe')?.contentWindow || null;
     if (!iframe) {
       throw new Error('Could not find the iFrame');
     }

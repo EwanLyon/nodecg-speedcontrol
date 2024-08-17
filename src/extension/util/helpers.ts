@@ -1,18 +1,19 @@
 import { RunData, RunDataArray, SendMessageAck } from '@nodecg-speedcontrol/types';
-import { Configschema } from '@nodecg-speedcontrol/types/schemas';
+import type NodeCG from '@nodecg/types';
 import _ from 'lodash';
-import type { ListenForCb } from 'nodecg/types/lib/nodecg-instance';
 import { get } from './nodecg';
 
 const nodecg = get();
 
 /**
- * Takes a run data object and returns a formed string of the player names.
+ * Takes a run data object and returns a formed string of the player names for the Twitch title.
  * @param runData Run Data object.
+ * @param mentionChannels Set to true to mention the player's Twitch channel in the title instead.
  */
-export function formPlayerNamesStr(runData: RunData): string {
+export function formatPlayersForTwitchTitle(runData: RunData, mentionChannels: boolean): string {
   return runData.teams.map((team) => (
-    team.players.map((player) => player.name).join(', ')
+    team.players.map((player) => (mentionChannels && player.social.twitch
+      ? `@${player.social.twitch}` : player.name)).join(', ')
   )).join(' vs. ') || 'N/A';
 }
 
@@ -84,20 +85,13 @@ export function findRunIndexFromId(id?: string): number {
 }
 
 /**
- * Returns this bundle's configuration along with the correct typings.
- */
-export function bundleConfig(): Configschema {
-  return nodecg.bundleConfig;
-}
-
-/**
  * Simple helper function to handle NodeCG/our message acknowledgements.
  * @param ack The acknoledgement function itself.
  * @param err Error to supply if any.
  * @param data Anything else you want to send alongside.
  */
 export function processAck<T>(
-  ack: ListenForCb | SendMessageAck | undefined,
+  ack: ReturnType<NodeCG.ListenHandler> | SendMessageAck | undefined,
   err: Error | null,
   data?: T,
 ): void {
@@ -141,9 +135,9 @@ export function checkGameAgainstIgnoreList(
     return false;
   }
   const list = service === 'horaro'
-    ? (bundleConfig().horaro || bundleConfig().schedule).ignoreGamesWhileImporting || []
-    : bundleConfig().oengus.ignoreGamesWhileImporting
-      || (bundleConfig().horaro || bundleConfig().schedule).ignoreGamesWhileImporting || [];
+    ? (nodecg.bundleConfig.horaro || nodecg.bundleConfig.schedule).ignoreGamesWhileImporting || []
+    : nodecg.bundleConfig.oengus.ignoreGamesWhileImporting
+      || (nodecg.bundleConfig.horaro || nodecg.bundleConfig.schedule).ignoreGamesWhileImporting || [];
   return !!list.find((str) => !!str.toLowerCase().match(
     new RegExp(`\\b${_.escapeRegExp(game.toLowerCase())}\\b`),
   ));

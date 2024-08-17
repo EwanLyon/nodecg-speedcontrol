@@ -3,6 +3,7 @@
   "en": {
     "name": "Name",
     "twitch": "Twitch",
+    "youtube": "YouTube",
     "countryCode": "Country Code",
     "removePlayer": "Remove Player",
     "pronouns": "Pronouns"
@@ -10,6 +11,7 @@
   "ja": {
     "name": "プレイヤー名",
     "twitch": "Twitch ID",
+    "youtube": "YouTube",
     "countryCode": "国名コード",
     "removePlayer": "プレイヤーの削除",
     "pronouns": "Pronouns"
@@ -31,6 +33,12 @@
       :value="playerData.social.twitch"
       @input="updatePlayerDataProp('social.twitch', $event)"
       :label="$t('twitch')"
+      left-border
+    />
+    <text-input
+      :value="playerData.social.youtube"
+      @input="updatePlayerDataProp('social.youtube', $event)"
+      :label="$t('youtube')"
       left-border
     />
     <text-input
@@ -63,12 +71,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { Configschema } from '@nodecg-speedcontrol/types/schemas';
 import { RunDataPlayer } from '@nodecg-speedcontrol/types';
-import TextInput from './TextInput.vue';
-import ModifyButton from './ModifyButton.vue';
+import { DeepReadonly } from 'vue';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import { storeModule } from '../store';
+import ModifyButton from './ModifyButton.vue';
+import TextInput from './TextInput.vue';
 
 @Component({
   components: {
@@ -99,8 +107,8 @@ export default class extends Vue {
     storeModule.removePlayer({ teamID, id });
   }
 
-  get customData(): { name: string, key: string }[] {
-    return (nodecg.bundleConfig as Configschema).customData?.player || [];
+  get customData(): DeepReadonly<{ name: string, key: string }[]> {
+    return nodecg.bundleConfig.customData?.player || [];
   }
 }
 </script>

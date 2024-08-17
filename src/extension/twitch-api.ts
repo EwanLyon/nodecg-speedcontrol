@@ -1,14 +1,13 @@
 import { CommercialDuration } from '@nodecg-speedcontrol/types';
-import express from 'express'; // eslint-disable-line import/no-extraneous-dependencies
 import needle, { BodyData, NeedleHttpVerbs, NeedleResponse } from 'needle';
 import * as events from './util/events';
-import { bundleConfig, processAck, to } from './util/helpers';
+import { processAck, to } from './util/helpers';
 import { get } from './util/nodecg';
 import { twitchAPIData, twitchChannelInfo, twitchCommercialTimer } from './util/replicants';
 
 const nodecg = get();
-const config = bundleConfig();
-const app = express();
+const config = nodecg.bundleConfig;
+const router = nodecg.Router();
 let channelInfoTO: NodeJS.Timeout;
 
 twitchAPIData.value.state = 'off'; // Set this to "off" on every start.
@@ -215,7 +214,7 @@ export async function updateChannelInfo(title?: string, game?: string): Promise<
     if (!dir && game) {
       // If no category found, find entry for default category.
       noTwitchGame = true;
-      [, dir] = await to(verifyTwitchDir(bundleConfig().twitch.streamDefaultGame));
+      [, dir] = await to(verifyTwitchDir(nodecg.bundleConfig.twitch.streamDefaultGame));
     }
 
     if (!config.twitch.metadataUseExternal) {
@@ -232,11 +231,11 @@ export async function updateChannelInfo(title?: string, game?: string): Promise<
         throw new Error(JSON.stringify(resp.body));
       }
     } else { // Send out message for external code to listen to.
-      /* to(events.sendMessage('twitchExternalMetadata', {
+      to(events.sendMessage('twitchExternalMetadata', {
         channelID: twitchAPIData.value.channelID,
         title: title?.slice(0, 140),
         gameID: dir?.id || '',
-      })); */
+      }));
       nodecg.sendMessage('twitchExternalMetadata', {
         channelID: twitchAPIData.value.channelID,
         title: title?.slice(0, 140),
@@ -246,7 +245,8 @@ export async function updateChannelInfo(title?: string, game?: string): Promise<
       // Currently we assume it worked and don't get a confirmation.
       // Checking *our* event system (server-to-server) isn't too hard, but checking
       // NodeCG's server-to-server can never work, so for now not implementing it.
-      // For future-proofing, the message's types are set to allow an acknowledgement.
+      // For future-proofing, the message's types are set to allow an acknowledgement,
+      // although the return data type is set to `void`.
     }
 
     nodecg.log.info('[Twitch] Successfully updated channel information');
@@ -396,7 +396,7 @@ if (config.twitch.enabled) {
   }
 
   // Route that receives Twitch's auth code when the user does the flow from the dashboard.
-  app.get('/nodecg-speedcontrol/twitchauth', (req, res) => {
+  router.get('/twitchauth', (req, res) => {
     twitchAPIData.value.state = 'authenticating';
     needle(
       'post',
@@ -425,7 +425,7 @@ if (config.twitch.enabled) {
     });
   });
 
-  nodecg.mount(app);
+  nodecg.mount('/nodecg-speedcontrol', router);
 }
 
 // NodeCG messaging system.

@@ -5,7 +5,6 @@
     "shortname": "Oengus Marathon Shortname",
     "helpText": "Insert the Oengus marathon shortname (not including \"/schedule\") above and press the \"Import Schedule Data\" button.",
     "importInProgressHelpText": "Import currently in progress...",
-    "useJapaneseNames": "Use Japanese names?",
     "import": "Import Schedule Data",
     "importProgress": "Importing {item}/{total}"
   },
@@ -14,7 +13,6 @@
     "shortname": "Oengusマラソンの略称",
     "helpText": "上記にインポートしたいOengusのイベントの略称を入力し(\"/schedule\"を含めないでください)、「スケジュール情報のインポート」ボタンを押してください。",
     "importInProgressHelpText": "インポート処理の実行中...",
-    "useJapaneseNames": "日本語ユーザーネームを使用しますか？",
     "import": "スケジュール情報のインポート",
     "importProgress": "{item}/{total}件をインポート"
   }
@@ -38,13 +36,6 @@
         <div>
           {{ $t('helpText') }}
         </div>
-        <!-- Switch use Japanese or not for importing data -->
-        <v-switch
-          v-model="useJapanese"
-          class="ma-1"
-          hide-details
-          :label="$t('useJapaneseNames')"
-        />
       </template>
       <template v-else>
         {{ $t('importInProgressHelpText') }}
@@ -72,26 +63,27 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { OengusImportStatus, Configschema } from '@nodecg-speedcontrol/types/schemas';
 import { Alert } from '@nodecg-speedcontrol/types';
-import { getDialog } from '../_misc/helpers';
+import { OengusImportStatus } from '@nodecg-speedcontrol/types/schemas';
+import { Component, Vue } from 'vue-property-decorator';
+import { checkDialog, getDialog } from '../_misc/helpers';
 import { replicantNS } from '../_misc/replicant_store';
 
 @Component
 export default class extends Vue {
   @replicantNS.State((s) => s.reps.oengusImportStatus) readonly importStatus!: OengusImportStatus;
-  marathonShort = (nodecg.bundleConfig as Configschema).oengus.defaultMarathon || '';
-  useJapanese = (nodecg.bundleConfig as Configschema).oengus.useJapanese;
+  marathonShort = nodecg.bundleConfig.oengus.defaultMarathon || '';
 
   importConfirm(): void {
-    const dialog = getDialog('alert-dialog') as Alert.Dialog;
-    if (dialog) {
-      dialog.openDialog({
-        name: 'ImportConfirm',
-        func: this.import,
-      });
-    }
+    checkDialog('alert-dialog').then(() => {
+      const dialog = getDialog('alert-dialog') as Alert.Dialog;
+      if (dialog) {
+        dialog.openDialog({
+          name: 'ImportConfirm',
+          func: this.import,
+        });
+      }
+    });
   }
 
   async import(confirm: boolean): Promise<void> {
@@ -99,7 +91,6 @@ export default class extends Vue {
       try {
         await nodecg.sendMessage('importOengusSchedule', {
           marathonShort: this.marathonShort,
-          useJapanese: this.useJapanese,
         });
       } catch (err) {
         // catch

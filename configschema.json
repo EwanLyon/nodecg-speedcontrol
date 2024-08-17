@@ -122,6 +122,10 @@
           "type": "string",
           "default": "Game: {{game}} - Category: {{category}} - Players: {{players}}"
         },
+        "tagPlayersInStreamTitle": {
+          "type": "boolean",
+          "default": false
+        },
         "streamDefaultGame": {
           "type": "string",
           "default": "Games + Demos"
@@ -163,6 +167,7 @@
         "clientSecret",
         "redirectURI",
         "streamTitle",
+        "tagPlayersInStreamTitle",
         "streamDefaultGame",
         "ffzIntegration"
       ]
@@ -189,6 +194,8 @@
           "default": "SHORTNAME"
         },
         "useJapanese": {
+          "$comment": "DEPRECATED; should be removed in next major version (2.x > 3.x).",
+          "description": "DEPRECATED; left for compatibility reasons.",
           "type": "boolean",
           "default": false
         },

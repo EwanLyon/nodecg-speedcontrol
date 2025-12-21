@@ -152,7 +152,7 @@
 <script lang="ts">
 import { Alert, RunData, RunModification } from '@nodecg-speedcontrol/types';
 import { Configschema, TwitchAPIData } from '@nodecg-speedcontrol/types/schemas';
-import { NodeCGAPIClient } from '@nodecg/types/client/api/api.client';
+import { NodeCGAPIClient } from 'nodecg/types/client/api/api.client';
 import clone from 'clone';
 import { DeepWritable } from 'ts-essentials';
 import { Component, Vue } from 'vue-property-decorator';

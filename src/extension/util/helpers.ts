@@ -1,5 +1,5 @@
 import { RunData, RunDataArray, SendMessageAck } from '@nodecg-speedcontrol/types';
-import type NodeCG from '@nodecg/types';
+import type NodeCG from 'nodecg/types';
 import _ from 'lodash';
 import { get } from './nodecg';
 

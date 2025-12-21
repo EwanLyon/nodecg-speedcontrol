@@ -1,5 +1,5 @@
 import { Configschema } from '@nodecg-speedcontrol/types/schemas';
-import type NodeCG from '@nodecg/types';
+import type NodeCG from 'nodecg/types';
 
 let nodecg: NodeCG.ServerAPI<Configschema>;
 
